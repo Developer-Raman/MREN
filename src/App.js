@@ -4,6 +4,7 @@ import {
     Card,
     Form,
     Button,
+    Input,
     Select,
     TreeSelect 
 } from "antd";
@@ -27,12 +28,14 @@ const tailLayout = {
 }
 
 const { Option } = Select
+const { TextArea } = Input
 
 const App = () => {
   const [form] = Form.useForm();
   const [certFileList, setCertFileList] = useState([]);
   const [filterCertFileList, setFilterCertFileList] = useState([]);
   const [selectedCertFileList, setSelectedCertFileList] = useState([]);
+  const [selectedServers, setSelectedServer] = useState([]);
   const [treeFileList, setTreeFileList] = useState([]);
   
   const fetchRequestsData = useCallback(async () => {
@@ -69,9 +72,10 @@ const App = () => {
     console.log("Failed:", errorInfo);
   };
 
-  const onChange = (values) => {
-    // console.log("onChange", values)
+  const onChange = (values, label, extra) => {
+    console.log("onChange", values, label, extra)
     getTreeSelectionName(values)
+    getAllChildren(label)
   }
 
   const onFileSelect = (filename) => {
@@ -96,10 +100,10 @@ const App = () => {
                                                           .groupBy('IDCRED')
                                                           .map((idVal, idkey) => {
                                                             m++;
-                                                            return ({ id:m*1000, pId:k*100, title: idkey, value: m*1000+'--'+idkey })
+                                                            return ({ id:m*1000, pId:k*100, title: idkey, value: m*1000+'--'+idkey, disabled: true  })
                                                           })
                                                           .value()
-                                              return ({ id:k*100, pId:j*10, title: vckey, value: k*100+'--'+vckey, children:vcData })
+                                              return ({ id:k*100, pId:j*10, title: vckey, value: k*100+'--'+vckey, children:vcData, disabled: true  })
                                             })
                                             .value()
                               let domainDataNew = []
@@ -111,14 +115,14 @@ const App = () => {
                                   }
                                 }
                               })
-                            return ({ id:j*10, pId:i, title: dkey, value: j*10+'--'+dkey, children: domainDataNew })
+                            return ({ id:j*10, pId:i, title: dkey, value: j*10+'--'+dkey, children: domainDataNew, disabled: true })
                           })
                           .value()
               return ({ id:i, pId: 0, title: key, value: i+'--'+key, children: sData})
             })
             .value()
 
-    // console.log(d)
+    console.log(d)
     setTreeFileList(d)
     setSelectedCertFileList(selectedlist)
 
@@ -130,7 +134,41 @@ const App = () => {
       console.log("title", title)
       return title
     })
-  } 
+  }
+  
+  const getAllChildren = (parents) => {
+    let selectedServers = _.filter(treeFileList, (server) => {
+      return _.includes(parents, server.title)
+    })
+    // console.log(selectedServers)
+    setSelectedServer(selectedServers)
+  }
+
+  const renderServerTree = (server) => {
+    let tree = server.title;
+    let l = 1
+    if(server.children && server.children.length>0) {
+      
+      const recursiveCall = (children, index) => {
+        children.forEach((element, i) => {
+          tree += "\n";
+          for (let j = 0; j < index; j++) {
+            tree += '-'
+          }
+          // tree += " -- "+ index + " " + element.title
+          tree += element.title
+          if(index != l) l = index
+          if(element.children && element.children.length>0) {
+            l++;
+            // console.log(l, index, i)
+            recursiveCall(element.children, l)
+          }
+        });
+      }
+      recursiveCall(server.children, l)
+    }
+    return tree
+  }
 
   return (
     <Card>
@@ -177,7 +215,7 @@ const App = () => {
             placeholder="Please select"
             allowClear
             multiple
-            treeDefaultExpandAll
+            // treeDefaultExpandAll
             onChange={onChange}
             treeData={treeFileList}
           >
@@ -190,6 +228,15 @@ const App = () => {
           </Button>
         </Form.Item>
       </Form>
+      {selectedServers.length>0 &&
+        selectedServers.map((server, key) => {
+          return (
+            <div key={key} style={{padding: "10px 0"}}>
+              <TextArea value={renderServerTree(server)} autoSize={{ minRows: 10, maxRows: 10}} />
+            </div>
+          )
+        })
+      }
     </Card>
   );
 }

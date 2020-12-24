@@ -66,6 +66,7 @@ const App = () => {
   const onFinish = async (values) => {
     console.log("form values", values)
     getTreeSelectionName(values.selectedFiles)
+    form.resetFields();
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -73,7 +74,6 @@ const App = () => {
   };
 
   const onChange = (values, label, extra) => {
-    console.log("onChange", values, label, extra)
     getTreeSelectionName(values)
     getAllChildren(label)
   }
@@ -122,16 +122,17 @@ const App = () => {
             })
             .value()
 
-    console.log(d)
+    // console.log(d)
     setTreeFileList(d)
     setSelectedCertFileList(selectedlist)
-
+    setSelectedServer([])
+    form.setFieldsValue({"selectedFiles": []})
   }
 
   const getTreeSelectionName = (values) => {
     return values.map(value => {
       let title = value.substr(value.indexOf('--')+2)
-      console.log("title", title)
+      // console.log("title", title)
       return title
     })
   }
@@ -209,7 +210,6 @@ const App = () => {
           <TreeSelect
             showSearch
             style={{ width: '100%' }}
-            // value={this.state.value}
             name={"selectedFiles"}
             dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
             placeholder="Please select"
